@@ -1,0 +1,70 @@
+<title>Serg Case Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="dk-app" id="dk-app">
+  <canvas class="dk-dust" id="dk-dust" aria-hidden="true"></canvas>
+  <div class="dk-blink" id="dk-blink" aria-hidden="true"></div>
+  <div class="dk-flash" id="dk-flash" aria-hidden="true"></div>
+
+  <!-- Общая палитра фольги. Лежит один раз: все рубашки и клон летящей карты
+       ссылаются на этот градиент по id. -->
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+    <defs>
+      <linearGradient id="dk-foil" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0"    stop-color="#FFF3D6"/>
+        <stop offset=".16"  stop-color="#FFD48A"/>
+        <stop offset=".33"  stop-color="#E9944E"/>
+        <stop offset=".5"   stop-color="#FFB2A8"/>
+        <stop offset=".66"  stop-color="#FFE0A4"/>
+        <stop offset=".83"  stop-color="#C9773C"/>
+        <stop offset="1"    stop-color="#FFEFC8"/>
+        <animateTransform attributeName="gradientTransform" type="translate"
+          values="-.35 0; .35 0; -.35 0" dur="9s" repeatCount="indefinite"/>
+      </linearGradient>
+      <linearGradient id="dk-foil-soft" x1="1" y1="0" x2="0" y2="1">
+        <stop offset="0"   stop-color="#FFE3B4" stop-opacity=".85"/>
+        <stop offset=".5"  stop-color="#D98A4E" stop-opacity=".85"/>
+        <stop offset="1"   stop-color="#FFD9C0" stop-opacity=".85"/>
+      </linearGradient>
+      <pattern id="dk-grid" width="15" height="15" patternUnits="userSpaceOnUse">
+        <path d="M15 0H0v15" fill="none" stroke="#FFCE9A" stroke-opacity=".055" stroke-width="1"/>
+      </pattern>
+    </defs>
+  </svg>
+  <header class="dk-top">
+    <div class="dk-name" id="dk-name"></div>
+    <div class="dk-tools">
+      <a class="dk-mini" id="dk-tg" href="#" target="_blank" rel="noopener" aria-label="Telegram">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M21.6 4.3 2.9 11.5c-.9.3-.9 1.6.1 1.9l4.7 1.5 1.8 5.6c.2.7 1.1.9 1.6.3l2.6-2.6 4.7 3.5c.6.4 1.4.1 1.6-.6l3.3-15.4c.2-.9-.7-1.6-1.7-1.4zM8.6 14.2l9.1-5.6-7.3 6.6-.3 3.3-1.5-4.3z"/>
+        </svg>
+      </a>
+      <button class="dk-mini dk-langb" type="button" id="dk-lang">EN</button>
+      <button class="dk-cv" id="dk-cv" type="button" aria-label="Открыть CV"><b>CV</b></button>
+    </div>
+  </header>
+
+  <div class="dk-stage">
+    <div class="dk-deck" id="dk-deck"></div>
+    <div class="dk-dots" id="dk-dots"></div>
+  </div>
+
+</div>
+
+<div class="dk-backdrop" id="dk-backdrop"></div>
+<div class="dk-zoom" id="dk-zoom" role="dialog" aria-modal="true"><img id="dk-zoom-img" alt=""></div>
+<div class="dk-modal" id="dk-modal" role="dialog" aria-modal="true" aria-labelledby="dk-title" tabindex="-1">
+  <button class="dk-close" id="dk-close" type="button" aria-label="Закрыть">
+    <svg width="14" height="14" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6">
+      <path d="M1 1l13 13M14 1L1 14"/></svg>
+  </button>
+  <div class="dk-scroll" id="dk-scroll"><div class="dk-in" id="dk-in"></div></div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

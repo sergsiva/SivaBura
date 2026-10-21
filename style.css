@@ -1,0 +1,604 @@
+/* ============================================================================
+   КОЛОДА КЕЙСОВ
+   Все классы с префиксом dk- и ничего не навешано на html/body —
+   файл можно целиком положить в блок T123 на Тильде.
+   Картинки задаются ссылками в CASES внизу файла.
+   ============================================================================ */
+/* Палитра нужна и вне .dk-app: модалка, летящая карта и панель —
+   отдельные узлы в конце body, переменные до них иначе не доходят. */
+.dk-app,.dk-modal,#dk-flyer{
+  --ink:     #0A0A0C;
+  --card:    #71717A;
+  --card-2:  #52525B;
+  --panel:   #17171B;
+  --panel-2: #0E0E11;
+  --edge:    rgba(255,255,255,.13);
+  --edge-2:  rgba(255,255,255,.22);
+  --text:    #EDEDF0;
+  --text-2:  #9C9CA6;
+  --text-3:  #6B6B76;
+  --glow:    #FFCE9A;
+  --card-w: 225px;
+  --card-h: 326px;
+  --gap:    -6px;
+  --ease-out:  cubic-bezier(.16,1,.3,1);
+  --ease-spin: cubic-bezier(.62,.03,.2,1);
+}
+
+.dk-app{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  min-height:min(100vh, 900px);
+  padding:30px clamp(18px,4vw,52px) 34px;
+  box-sizing:border-box;
+  background:
+    /* Свет собран из вложенных эллипсов с центром ниже экрана: их верхние
+       кромки — дуги, поэтому горизонт изогнут, а не лежит полосой.
+       Каждый слой гаснет своими остановками — отсюда плавный переход
+       от яркой кромки к дальнему свечению. */
+    radial-gradient(58% 26% at 50% 108%,
+      rgba(255,252,240,.98) 0%, rgba(255,238,196,.78) 20%,
+      rgba(255,212,142,.44) 40%, rgba(255,184,104,.16) 60%, transparent 78%),
+    radial-gradient(82% 40% at 50% 114%,
+      rgba(255,208,132,.72) 0%, rgba(255,176,80,.42) 30%,
+      rgba(255,146,52,.17) 55%, transparent 78%),
+    radial-gradient(124% 62% at 50% 124%,
+      rgba(255,150,58,.30) 0%, rgba(240,118,38,.12) 42%, transparent 74%),
+    radial-gradient(130% 60% at 50% -18%, rgba(58,56,74,.20), transparent 62%),
+    linear-gradient(180deg,
+      #08080C 0%, #050508 28%, #040406 50%,
+      #050506 66%, #080607 80%, #0C0808 92%, #100A08 100%);
+  color:var(--text);
+  font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.6;
+  overflow:hidden;
+}
+.dk-app *{box-sizing:border-box}
+.dk-app button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.dk-app :focus-visible,.dk-modal :focus-visible{outline:2px solid var(--glow);outline-offset:4px;border-radius:10px}
+html.dk-lock,body.dk-lock{overflow:hidden}
+
+/* ---------- шапка ---------- */
+.dk-top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.dk-name{font-size:17px;font-weight:500;line-height:1.35;color:var(--text)}
+.dk-name span{color:var(--text-3);font-weight:400}
+.dk-app .dk-cv{
+  position:relative;
+  width:60px;height:60px;
+  display:grid;place-items:center;
+  border-radius:50%;
+  font-size:13px;font-weight:500;
+  color:rgba(255,255,255,.9);
+  border:1px solid rgba(255,255,255,.17);
+  background:
+    linear-gradient(158deg, rgba(255,255,255,.13), rgba(255,255,255,.035) 52%, rgba(255,255,255,.075));
+  backdrop-filter:blur(10px) saturate(1.5);
+  -webkit-backdrop-filter:blur(10px) saturate(1.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.26),
+    0 8px 20px -14px rgba(0,0,0,.9);
+  transform-style:preserve-3d;
+  transform:translate(var(--cvx,0px), var(--cvy,0px))
+            rotateX(var(--cvrx,0deg)) rotateY(var(--cvry,0deg));
+  transition:transform .3s var(--ease-out), border-color .3s, box-shadow .3s;
+  overflow:hidden;
+  isolation:isolate;
+}
+/* переливание: цветное кольцо ходит по краю линзы */
+.dk-app .dk-cv::before{
+  content:"";
+  position:absolute;inset:-40%;
+  z-index:-1;
+  opacity:.34;
+  -webkit-mask:radial-gradient(closest-side, transparent 46%, #000 74%);
+  mask:radial-gradient(closest-side, transparent 46%, #000 74%);
+  background:conic-gradient(from 0deg,
+    rgba(255,90,120,.85), rgba(255,200,90,.85), rgba(120,255,190,.85),
+    rgba(110,180,255,.85), rgba(200,120,255,.85), rgba(255,90,120,.85));
+  filter:blur(11px);
+  animation:dk-spin 7s linear infinite;
+  transition:opacity .3s;
+}
+/* стеклянный блик поверх */
+.dk-app .dk-cv::after{
+  content:"";
+  position:absolute;inset:0;
+  border-radius:50%;
+  pointer-events:none;
+  background:linear-gradient(180deg, rgba(255,255,255,.16), transparent 46%);
+  opacity:.7;
+  transition:opacity .3s;
+}
+@keyframes dk-spin{to{transform:rotate(360deg)}}
+.dk-app .dk-cv b{
+  position:relative;
+  font-weight:500;
+  /* хроматическая аберрация — расходится под курсором */
+  text-shadow:
+    calc(var(--ab,0px) * -1) 0 rgba(255,60,90,.9),
+    var(--ab,0px) 0 rgba(70,220,255,.9);
+  transition:text-shadow .18s linear;
+}
+.dk-app .dk-cv:hover{border-color:rgba(255,255,255,.42)}
+.dk-app .dk-cv:hover::before{opacity:.75}
+.dk-app .dk-cv:hover::after{opacity:1}
+
+/* горизонт — источник света под колодой */
+.dk-app::after{
+  content:"";
+  position:absolute;left:50%;bottom:-2%;
+  width:150%;height:30%;
+  transform:translateX(-50%);
+  pointer-events:none;
+  background:radial-gradient(46% 100% at 50% 100%, rgba(255,222,164,.26), rgba(255,184,104,.09) 45%, transparent 74%);
+  filter:blur(34px);
+}
+
+/* ---------- вспышка при раздаче ---------- */
+.dk-blink,.dk-flash{
+  position:absolute;inset:0;
+  pointer-events:none;
+  z-index:3;
+  opacity:0;
+}
+.dk-blink{background:#000}
+.dk-flash{
+  background:radial-gradient(closest-side,
+    rgba(255,252,240,.95), rgba(255,214,150,.55) 32%, rgba(255,170,80,.16) 58%, transparent 78%);
+  transform:scale(.35);
+}
+.dk-deck-wrap{position:relative}
+
+/* ---------- 5. пылинки ---------- */
+.dk-dust{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.dk-top,.dk-stage,.dk-foot-space{position:relative;z-index:1}
+
+/* ---------- сцена ---------- */
+.dk-stage{
+  flex:1;
+  display:grid;
+  place-items:center;
+  min-height:420px;
+}
+.dk-deck{
+  position:relative;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  /* Колода ПЛОСКАЯ. Раньше все карты лежали в одном 3D-пространстве, и
+     наклонённые соседи буквально пересекали активную плоскостями. Теперь у
+     каждого слота своя перспектива: карта рендерится отдельным плоским слоем
+     и просто рисуется поверх соседей — пересечься нечем. */
+  transform-style:flat;
+  pointer-events:none;
+}
+
+/* Слот — статичная коробка и граница 3D: своя перспектива, точка схода
+   вынесена в центр сцены (--po), поэтому камера остаётся общей и веер
+   выглядит снятым одним объективом. */
+.dk-slot{
+  position:relative;
+  width:var(--card-w);
+  height:var(--card-h);
+  flex:0 0 auto;
+  perspective:1500px;
+  perspective-origin:var(--po, 50% 50%);
+  transform-style:flat;
+}
+/* Положение карты в веере. Меняется только в режиме правки, на ховер — нет,
+   поэтому зона клика внутри него тоже стоит на месте. */
+.dk-pose{
+  position:absolute;inset:0;
+  transform-style:preserve-3d;
+  transform:translate(var(--tx,0px), var(--ty,0px))
+            rotate(var(--rot,0deg)) rotateY(var(--roty,0deg))
+            scale(var(--scale,1));
+}
+/* Раздача: переход между стопкой и веером — одна анимация трансформации,
+   у каждой карты своя задержка, отсюда ощущение сданной колоды. */
+.dk-deck.is-dealing .dk-pose{
+  transition:transform var(--dealMs,900ms) cubic-bezier(.22,.9,.24,1) var(--delay,0ms);
+}
+/* в стопке соседи не разъезжаются и не гаснут */
+.dk-deck.is-pile.is-live .dk-slot{filter:none}
+.dk-deck.is-pile.is-live .dk-slot:not(.is-hot) .dk-shift{--dz:0px;--sc:1}
+.dk-slot + .dk-slot{margin-left:var(--gap,-6px)}
+
+/* Всё, что реагирует на курсор, живёт внутри слота и не принимает попаданий:
+   3D-подача выносит карту ближе к зрителю, а в preserve-3d попадание считается
+   по геометрии — иначе карта перехватывает курсор у зоны клика и ховер мигает. */
+.dk-shift{
+  width:100%;height:100%;
+  transform-style:preserve-3d;
+  transform:translate(var(--magx,0px), var(--magy,0px))
+            translateX(var(--push,0px))
+            translateZ(var(--dz,0px))
+            scale(var(--sc,1));
+  transition:transform .34s var(--ease-out);
+  pointer-events:none;
+}
+/* Соседи уезжают вглубь сцены, а не просто мельчают: между ними и активной
+   картой получается около 200px по Z, и пересекаться им уже нечем. */
+.dk-deck.is-live .dk-slot{filter:brightness(.5) contrast(.94)}
+.dk-deck.is-live .dk-slot:not(.is-hot) .dk-shift{--dz:var(--backz,-115px);--sc:.99}
+.dk-deck.is-live .dk-slot.is-hot{filter:none}
+.dk-deck.is-live .dk-slot.push-l{--push:-26px}
+.dk-deck.is-live .dk-slot.push-r{--push:26px}
+
+/* ---------- парение ---------- */
+.dk-float{
+  width:100%;height:100%;
+  transform-style:preserve-3d;
+  animation:dk-drift var(--dur,7s) ease-in-out var(--delay,0s) infinite;
+}
+@keyframes dk-drift{
+  0%,100%{transform:translate3d(0,0,0) rotate(0deg)}
+  33%    {transform:translate3d(5px,-19px,0) rotate(1deg)}
+  66%    {transform:translate3d(-5px,-8px,0) rotate(-.85deg)}
+}
+
+/* ---------- ховер: вперёд по Z, не вверх ---------- */
+.dk-tilt{
+  width:100%;height:100%;
+  transform-style:preserve-3d;
+  transition:transform .4s var(--ease-out);
+}
+/* Карта разворачивается на зрителя ИЗ своего положения: сначала гасим доворот
+   слота по вертикали, потом его наклон в плоскости — в этом порядке поворот
+   разбирается точно, — и только после этого добавляем параллакс за курсором.
+   Масштаб приводится к общему, чтобы мелкие карты не оставались мелкими. */
+.dk-slot.is-hot .dk-tilt{
+  transform:translateY(-6px) translateZ(var(--lift,88px))
+            rotateY(calc(var(--roty,0deg) * -1 * var(--uy,.78)))
+            rotateZ(calc(var(--rot,0deg)  * -1 * var(--uz,.55)))
+            rotateX(calc((var(--my,.5) - .5) * -1 * var(--tiltd,14deg)))
+            rotateY(calc((var(--mx,.5) - .5) * var(--tiltd,14deg)))
+            scale(calc(1.04 / var(--scale,1)));
+}
+
+/* ---------- карта: две грани ---------- */
+.dk-card{
+  position:relative;
+  width:100%;height:100%;
+  /* контейнер прозрачный и БЕЗ overflow:hidden — иначе схлопнется 3D
+     и рубашка перестанет существовать как отдельная грань */
+  border-radius:15px;
+  transform-style:flat;
+  will-change:transform;
+  box-shadow:0 24px 44px -26px rgba(0,0,0,.9);
+  transition:box-shadow .45s var(--ease-out);
+}
+.dk-face{
+  position:absolute;inset:0;
+  border-radius:15px;
+  overflow:hidden;
+  background-color:var(--card);
+  background-image:linear-gradient(180deg, var(--card), var(--card-2));
+  background-size:cover;
+  background-position:center;
+  border:1px solid var(--edge);
+  transition:border-color .35s var(--ease-out);
+}
+/* Переворот сделан сжатием, а не оборотом в 3D: летящая карта живёт на
+   композиторском слое, там субдерево растрируется один раз и backface-visibility
+   молчит — спины в текстуре просто нет. Здесь грани переключаются кодом ровно
+   в тот кадр, когда карта сжата в линию. */
+.dk-back{opacity:0}
+.dk-card.is-back .dk-front{opacity:0}
+.dk-card.is-back .dk-back{opacity:1}
+/* ---------- рубашка: плата + фольга ----------
+   Орнамент — вектор, а переливы лежат ПОД ним и просвечивают сквозь линии:
+   не рисунок с бликом, а дорожки из самой фольги. */
+.dk-back:not([style*="url"]){
+  background-image:
+    radial-gradient(110% 65% at 50% 42%, rgba(255,190,120,.07), transparent 72%),
+    linear-gradient(168deg, #0E0B09, #080705 55%, #100B07);
+}
+.dk-orn{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  display:block;
+  opacity:.92;
+}
+/* блик проходит по рубашке — фольга ловит свет */
+.dk-back::after{
+  content:"";
+  position:absolute;inset:-30%;
+  pointer-events:none;
+  background:linear-gradient(102deg,
+    transparent 38%, rgba(255,255,255,.10) 47%, rgba(255,246,228,.26) 50%,
+    rgba(255,255,255,.10) 53%, transparent 62%);
+  mix-blend-mode:overlay;
+  animation:dk-catch 6.5s ease-in-out infinite;
+}
+@keyframes dk-catch{
+  0%,100%{transform:translateX(-42%)}
+  50%    {transform:translateX(42%)}
+}
+.dk-slot.is-hot .dk-face{border-color:rgba(255,255,255,.3)}
+.dk-slot.is-hot .dk-card{
+  box-shadow:
+    0 0 0 1px rgba(255,206,154,.24),
+    0 0 40px -4px rgba(255,196,132,.46),
+    0 48px 76px -30px rgba(255,176,104,.34),
+    0 40px 60px -30px rgba(0,0,0,.95);
+}
+.dk-card.is-hidden{opacity:0;transition:opacity .1s linear}
+
+/* ---------- свечение, голограмма, блик ---------- */
+.dk-fx{position:absolute;inset:0;pointer-events:none;border-radius:15px;overflow:hidden}
+.dk-glow{
+  position:absolute;inset:-30%;opacity:0;transition:opacity .35s ease;
+  background:radial-gradient(240px 240px at calc(var(--mx,.5)*100%) calc(var(--my,.5)*100%),
+             rgba(255,206,154,.45), transparent 62%);
+  mix-blend-mode:screen;
+}
+.dk-holo{
+  position:absolute;inset:0;opacity:0;transition:opacity .4s ease;
+  mix-blend-mode:color-dodge;
+  background:repeating-linear-gradient(112deg,
+    rgba(255,90,140,.16) 0px, rgba(255,190,80,.16) 22px, rgba(120,255,190,.16) 44px,
+    rgba(90,170,255,.16) 66px, rgba(190,110,255,.16) 88px, rgba(255,90,140,.16) 110px);
+  background-size:220% 220%;
+  background-position:calc(var(--mx,.5)*100%) calc(var(--my,.5)*100%);
+}
+.dk-sheen{
+  position:absolute;top:-40%;bottom:-40%;left:-60%;right:-60%;
+  opacity:0;transition:opacity .3s ease;
+  transform:translateX(calc((var(--mx,.5) - .5) * 150%)) rotate(9deg);
+  background:linear-gradient(104deg,
+    transparent 34%, rgba(255,255,255,.06) 44%, rgba(255,255,255,.16) 50%,
+    rgba(255,255,255,.06) 56%, transparent 66%);
+  mix-blend-mode:overlay;
+}
+.dk-slot.is-hot .dk-glow{opacity:.62}
+.dk-slot.is-hot .dk-holo{opacity:.3}
+.dk-slot.is-hot .dk-sheen{opacity:1}
+
+/* ---------- зона клика: ровно по карте, неподвижна ---------- */
+.dk-hit{
+  position:absolute;
+  inset:-4px;
+  z-index:6;
+  /* вынесена вперёд, чтобы доворот слота не увёл её дальнюю половину
+     за плоскость контейнера */
+  transform:translateZ(28px);
+  border-radius:18px;
+  background:transparent;
+  pointer-events:auto;
+  cursor:pointer;
+}
+
+.dk-tools{display:flex;align-items:center;gap:10px;perspective:520px}
+.dk-app .dk-cv{margin-left:14px}          /* 24px от соседних кнопок */
+
+/* мелкие кнопки: только ховер, без магнита и наклона */
+.dk-app .dk-mini{
+  width:34px;height:34px;
+  display:grid;place-items:center;
+  border:1px solid var(--edge);
+  border-radius:999px;
+  color:var(--text-3);
+  text-decoration:none;
+  transition:color .2s, border-color .2s, background .2s;
+}
+.dk-app .dk-mini:hover{color:var(--text);border-color:var(--edge-2);background:rgba(255,255,255,.06)}
+
+.dk-app .dk-langb{font-size:11px;font-weight:500;letter-spacing:.02em}
+
+/* ---------- полёт ---------- */
+#dk-flyer{position:fixed;z-index:9980;pointer-events:none;transform-style:preserve-3d;will-change:transform,opacity}
+
+/* ---------- модалка ---------- */
+.dk-backdrop{
+  position:fixed;inset:0;z-index:9970;
+  background:rgba(6,6,9,.76);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  opacity:0;visibility:hidden;
+  transition:opacity .35s ease, visibility .35s;
+}
+.dk-backdrop.is-on{opacity:1;visibility:visible}
+
+.dk-modal{
+  position:fixed;z-index:9990;top:50%;left:50%;
+  width:min(900px, calc(100vw - 32px));
+  max-height:min(88vh, 900px);
+  transform:translate(-50%,-46%) scale(.94);
+  opacity:0;visibility:hidden;
+  overflow:hidden;
+  border-radius:22px;
+  background:#1A1A1F;
+  box-shadow:0 60px 120px -40px rgba(0,0,0,.95);
+  color:#EDEDF0;
+  font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.6;
+  transition:opacity .42s cubic-bezier(.16,1,.3,1), transform .42s cubic-bezier(.16,1,.3,1), visibility .42s;
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent;
+}
+.dk-modal.is-on{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
+/* прокручивается вложенный слой, поэтому крестик остаётся на месте */
+.dk-scroll{
+  max-height:min(88vh, 900px);
+  overflow:hidden auto;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(255,255,255,.18) transparent;
+}
+.dk-scroll::-webkit-scrollbar{width:8px}
+.dk-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:8px}
+.dk-modal *{box-sizing:border-box}
+.dk-modal button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+
+.dk-in{padding:32px clamp(20px,4vw,44px) 40px}
+.dk-modal .dk-close{
+  position:absolute;
+  top:16px;right:16px;
+  z-index:5;
+  width:38px;height:38px;display:grid;place-items:center;
+  border-radius:11px;
+  background:rgba(38,38,44,.86);backdrop-filter:blur(6px);
+  color:rgba(255,255,255,.62);
+  transition:background .2s,color .2s,border-color .2s;
+}
+.dk-modal .dk-close:hover{background:rgba(255,255,255,.12);color:#fff}
+
+.dk-studio{
+  font-size:13px;font-weight:500;color:var(--glow);
+  margin:0 0 6px;
+}
+.dk-meta{
+  font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:10.5px;color:#6B6B76;
+}
+.dk-title{
+  margin:12px 0 0;
+  font-size:clamp(24px,3.2vw,33px);font-weight:700;
+  line-height:1.16;letter-spacing:-.025em;text-wrap:balance;max-width:24ch;
+}
+.dk-stats{margin:26px 0 0;display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.dk-stat{padding:15px 14px 13px;border-radius:12px;background:rgba(255,255,255,.055)}
+.dk-stat b{display:block;font-size:23px;font-weight:700;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.dk-stat span{display:block;margin-top:8px;font-size:11.5px;line-height:1.35;color:#8A8A95}
+.dk-lead{margin:24px 0 0;font-size:16.5px;color:#DCDCE2;max-width:64ch}
+
+/* блок кейса: текст, под ним его картинка */
+.dk-sec{margin:30px 0 0}
+.dk-sec h3{margin:0 0 8px;font-size:13px;font-weight:500;color:var(--glow)}
+.dk-sec p{margin:0;font-size:15px;color:#9C9CA6;max-width:66ch}
+.dk-sec .dk-shot{margin-top:14px}
+/* side:true — картинка сбоку от текста */
+.dk-sec.is-side{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:center}
+.dk-sec.is-side .dk-shot{margin-top:0}
+
+.dk-shots{margin:26px 0 0;display:grid;gap:12px}
+.dk-shot{
+  width:100%;display:block;border-radius:14px;
+  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025));
+}
+.dk-shot img{display:block;width:100%;height:auto;border-radius:13px}
+.dk-shot.is-empty{
+  aspect-ratio:16/9;
+  display:grid;place-items:center;align-content:center;gap:9px;
+  color:#6B6B76;
+  font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:10px;
+}
+.dk-frame{width:100%;height:min(70vh,760px);border:0;border-radius:14px;background:#0E0E11}
+
+.dk-foot{
+  margin:32px 0 0;
+  display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  font-size:13.5px;color:#9C9CA6;
+}
+.dk-foot b{color:#EDEDF0;font-weight:500}
+.dk-link{
+  font-size:13px;padding:10px 18px;border-radius:10px;
+  background:rgba(255,255,255,.08);color:#EDEDF0;text-decoration:none;
+  transition:background .2s;
+}
+.dk-link:hover{background:rgba(255,255,255,.15)}
+.dk-in{transition:opacity .18s ease}
+.dk-nav{display:flex;gap:8px;margin-left:auto}
+.dk-modal .dk-navb{
+  font-size:13px;padding:10px 15px;border-radius:10px;
+  background:rgba(255,255,255,.06);color:#B9B9C2;
+  transition:background .2s,color .2s;
+}
+.dk-modal .dk-navb:hover{background:rgba(255,255,255,.13);color:#EDEDF0}
+.dk-shot.is-zoom img{cursor:zoom-in}
+
+/* лупа поверх кейса */
+.dk-zoom{
+  position:fixed;inset:0;z-index:9995;
+  display:grid;place-items:center;
+  padding:28px;
+  background:rgba(5,4,8,.92);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  opacity:0;visibility:hidden;
+  transition:opacity .28s ease, visibility .28s;
+  cursor:zoom-out;
+}
+.dk-zoom.is-on{opacity:1;visibility:visible}
+.dk-zoom img{
+  max-width:100%;max-height:100%;
+  border-radius:12px;
+  box-shadow:0 40px 90px -40px rgba(0,0,0,.95);
+  transform:scale(.96);
+  transition:transform .28s cubic-bezier(.16,1,.3,1);
+}
+.dk-zoom.is-on img{transform:scale(1)}
+
+@media (max-width:1220px){
+  .dk-app{--card-w:194px;--card-h:281px}
+  .dk-slot + .dk-slot{--gap:-16px}
+}
+
+/* ---------- 7. мобильная листалка ----------
+   Веер на узком экране не читается: карты становятся ровной лентой со
+   снапом по центру. Родной скролл — значит инерция и жесты системные. */
+.dk-dots{display:none}
+
+@media (max-width:820px){
+  .dk-app{
+    --card-w:min(60vw, 240px);
+    --card-h:calc(var(--card-w) * 1.449);
+    min-height:min(100svh, 820px);
+    padding:22px 0 26px;
+  }
+  .dk-top{padding:0 18px;flex-wrap:wrap;align-items:center;gap:12px}
+  .dk-name{font-size:15px}
+  .dk-app .dk-cv{width:52px;height:52px;font-size:12px;flex:0 0 auto;margin-left:10px}
+  .dk-stage{
+    perspective:none;min-height:0;
+    grid-auto-flow:row;align-content:center;gap:18px;
+  }
+
+  .dk-deck{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    gap:16px;
+    padding:34px calc(50vw - var(--card-w) / 2);
+    overflow-x:auto;
+    overflow-y:hidden;
+    scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    transform-style:flat;
+    pointer-events:auto;
+  }
+  .dk-deck::-webkit-scrollbar{display:none}
+
+  .dk-slot{
+    perspective:none;
+    scroll-snap-align:center;
+    margin-left:0 !important;
+  }
+  .dk-deck.is-pile{overflow:hidden}
+  .dk-shift{transform:none !important}
+  .dk-tilt{transform:none !important}
+  .dk-card{transform-style:flat}
+  .dk-hit{transform:none;inset:0}
+  .dk-deck.is-live .dk-slot{filter:none}
+
+  /* точки-указатели */
+  .dk-dots{
+    display:flex;
+    justify-content:center;
+    gap:7px;
+    position:relative;
+    z-index:2;
+  }
+  .dk-dot{
+    width:7px;height:7px;border-radius:99px;
+    background:rgba(255,255,255,.38);
+    transition:background .25s, width .25s;
+  }
+  .dk-dot.is-on{width:22px;background:rgba(255,226,176,.95)}
+
+  .dk-in{padding:26px 18px 32px}
+  .dk-modal .dk-close{top:12px;right:12px}
+  .dk-stats{grid-template-columns:1fr 1fr}
+  .dk-sec.is-side{grid-template-columns:1fr}
+}
