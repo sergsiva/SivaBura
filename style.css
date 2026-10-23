@@ -1,5 +1,23 @@
 /* Сброс отступов страницы: без него браузер оставляет белые поля по краям */
-html,body{margin:0;padding:0;background:#100A08}
+html{margin:0;padding:0;min-height:100%;background-color:#100A08;
+  background-image:/* Свет собран из вложенных эллипсов с центром ниже экрана: их верхние
+       кромки — дуги, поэтому горизонт изогнут, а не лежит полосой.
+       Каждый слой гаснет своими остановками — отсюда плавный переход
+       от яркой кромки к дальнему свечению. */
+    radial-gradient(58% 26% at 50% 108%,
+      rgba(255,252,240,.98) 0%, rgba(255,238,196,.78) 20%,
+      rgba(255,212,142,.44) 40%, rgba(255,184,104,.16) 60%, transparent 78%),
+    radial-gradient(82% 40% at 50% 114%,
+      rgba(255,208,132,.72) 0%, rgba(255,176,80,.42) 30%,
+      rgba(255,146,52,.17) 55%, transparent 78%),
+    radial-gradient(124% 62% at 50% 124%,
+      rgba(255,150,58,.30) 0%, rgba(240,118,38,.12) 42%, transparent 74%),
+    radial-gradient(130% 60% at 50% -18%, rgba(58,56,74,.20), transparent 62%),
+    linear-gradient(180deg,
+      #08080C 0%, #050508 28%, #040406 50%,
+      #050506 66%, #080607 80%, #0C0808 92%, #100A08 100%);
+  background-repeat:no-repeat;background-attachment:fixed;}
+body{margin:0;padding:0;background:transparent}
 body{min-height:100vh}
 
 /* ============================================================================
@@ -36,23 +54,7 @@ body{min-height:100vh}
   min-height:100vh;
   padding:30px clamp(18px,4vw,52px) 34px;
   box-sizing:border-box;
-  background:
-    /* Свет собран из вложенных эллипсов с центром ниже экрана: их верхние
-       кромки — дуги, поэтому горизонт изогнут, а не лежит полосой.
-       Каждый слой гаснет своими остановками — отсюда плавный переход
-       от яркой кромки к дальнему свечению. */
-    radial-gradient(58% 26% at 50% 108%,
-      rgba(255,252,240,.98) 0%, rgba(255,238,196,.78) 20%,
-      rgba(255,212,142,.44) 40%, rgba(255,184,104,.16) 60%, transparent 78%),
-    radial-gradient(82% 40% at 50% 114%,
-      rgba(255,208,132,.72) 0%, rgba(255,176,80,.42) 30%,
-      rgba(255,146,52,.17) 55%, transparent 78%),
-    radial-gradient(124% 62% at 50% 124%,
-      rgba(255,150,58,.30) 0%, rgba(240,118,38,.12) 42%, transparent 74%),
-    radial-gradient(130% 60% at 50% -18%, rgba(58,56,74,.20), transparent 62%),
-    linear-gradient(180deg,
-      #08080C 0%, #050508 28%, #040406 50%,
-      #050506 66%, #080607 80%, #0C0808 92%, #100A08 100%);
+  background:transparent;
   color:var(--text);
   font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   line-height:1.6;
