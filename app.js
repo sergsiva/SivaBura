@@ -115,6 +115,8 @@ async function loadContent(){
       cover: raw(p + 'cover'),
       back:  raw(p + 'back'),
       studio: txt(p + 'studio'),
+      date:   txt(p + 'date'),
+      hero:   raw(p + 'hero'),
       meta:   txt(p + 'meta'),
       title:  txt(p + 'title'),
       stats:  stats(p),
@@ -211,6 +213,7 @@ const backdrop = document.getElementById('dk-backdrop');
 const modal    = document.getElementById('dk-modal');
 const inner    = document.getElementById('dk-in');
 const scroller = document.getElementById('dk-scroll');
+scroller.addEventListener('scroll', () => modal.classList.toggle('is-scrolled', scroller.scrollTop > 240), { passive: true });
 document.getElementById('dk-close').addEventListener('click', () => closeAll());
 
 CASES.forEach((c, i) => {
@@ -428,24 +431,92 @@ function sectionHtml(b, empties){
   </div>`;
 }
 
-function render(d, empties){
-  const secs = (d.sections || []).map(b => sectionHtml(b, empties)).join('');
-  inner.innerHTML = `
-    ${d.studio ? `<div class="dk-studio">${t(d.studio)}</div>` : ''}
-    ${d.meta   ? `<div class="dk-meta">${t(d.meta)}</div>` : ''}
-    ${d.title  ? `<h2 class="dk-title" id="dk-title">${t(d.title)}</h2>` : ''}
-    ${d.stats && d.stats.length ? `<div class="dk-stats">${
-      d.stats.map(x => `<div class="dk-stat"><b>${t(x[0])}</b><span>${t(x[1])}</span></div>`).join('')}</div>` : ''}
-    ${d.lead   ? `<p class="dk-lead">${t(d.lead)}</p>` : ''}
-    ${d.frame  ? `<div class="dk-shots"><iframe class="dk-frame" src="${d.frame}" title="CV"></iframe></div>` : secs}
-    <div class="dk-foot">
-      ${d.link ? `<a class="dk-link" href="${d.link}" target="_blank" rel="noopener">${t(UI.open)}</a>` : '<span></span>'}
-      ${d.id !== 'cv' ? `<div class="dk-nav">
-        <button class="dk-navb" type="button" data-go="-1">${t(UI.prev)}</button>
-        <button class="dk-navb" type="button" data-go="1">${t(UI.next)}</button>
-      </div>` : ''}
+/* ---------- шапка кейса: фрейм, навигация, липкая строка ---------- */
+const VIDEO_RE = /\.(mp4|webm|ogg)(\?|#|$)/i;
+
+function embedUrl(u){
+  const yt = u.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{6,})/);
+  if (yt) return 'https://www.youtube.com/embed/' + yt[1];
+  const vm = u.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vm) return 'https://player.vimeo.com/video/' + vm[1];
+  return null;
+}
+
+function mediaHtml(src){
+  if (!src)
+    return `<div class="dk-hero-media is-empty">${SHOT_ICON}<span>${t(UI.shot)} · 16:9</span></div>`;
+  const emb = embedUrl(src);
+  if (emb)
+    return `<div class="dk-hero-media"><iframe src="${emb}" title="Видео" allow="encrypted-media; picture-in-picture" allowfullscreen></iframe></div>`;
+  if (VIDEO_RE.test(src))
+    return `<div class="dk-hero-media"><video src="${src}" controls playsinline preload="metadata"></video></div>`;
+  return `<div class="dk-hero-media"><img src="${src}" alt=""></div>`;
+}
+
+function navNeighbors(d){
+  const i = CASES.indexOf(d), n = CASES.length;
+  return { prev: CASES[(i - 1 + n) % n], next: CASES[(i + 1) % n] };
+}
+
+function navHtml(d){
+  const { prev, next } = navNeighbors(d);
+  return `<button class="dk-navb" type="button" data-go="-1">← ${t(prev.studio)}</button>`
+       + `<button class="dk-navb" type="button" data-go="1">${t(next.studio)} →</button>`;
+}
+
+function heroHtml(d){
+  const stats = (d.stats || []).map(x =>
+    `<div class="dk-hstat"><b>${t(x[0])}</b><span>${t(x[1])}</span></div>`).join('');
+  return `
+    <div class="dk-hero">
+      ${mediaHtml(d.hero)}
+      <div class="dk-hero-shade" aria-hidden="true"></div>
+      <div class="dk-hero-top"><div class="dk-hero-nav">${navHtml(d)}</div></div>
+      <div class="dk-hero-head">
+        <div class="dk-hero-co">${t(d.studio)}${d.date ? ` <span>· ${t(d.date)}</span>` : ''}</div>
+        <h2 class="dk-hero-title" id="dk-title">${t(d.title)}</h2>
+      </div>
+      ${stats ? `<div class="dk-hero-stats">${stats}</div>` : ''}
     </div>`;
-  inner.querySelectorAll('[data-go]').forEach(b =>
+}
+
+function barHtml(d){
+  return `<div class="dk-bar-co">${t(d.studio)}${d.date ? ` <span>· ${t(d.date)}</span>` : ''}</div>`
+       + `<div class="dk-bar-nav">${navHtml(d)}</div>`;
+}
+
+function render(d, empties){
+  const bar = document.getElementById('dk-bar');
+  const isCase = d.id !== 'cv';
+  modal.classList.toggle('is-case', isCase);
+
+  if (isCase){
+    bar.innerHTML = barHtml(d);
+    const secs = (d.sections || []).map(b => sectionHtml(b, empties)).join('');
+    inner.innerHTML = `
+      ${heroHtml(d)}
+      ${d.meta ? `<div class="dk-meta">${t(d.meta)}</div>` : ''}
+      ${d.lead ? `<p class="dk-lead">${t(d.lead)}</p>` : ''}
+      ${secs}
+      <div class="dk-foot">
+        ${d.link ? `<a class="dk-link" href="${d.link}" target="_blank" rel="noopener">${t(UI.open)}</a>` : '<span></span>'}
+      </div>`;
+  } else {
+    bar.innerHTML = '';
+    const secs = (d.sections || []).map(b => sectionHtml(b, empties)).join('');
+    inner.innerHTML = `
+      ${d.studio ? `<div class="dk-studio">${t(d.studio)}</div>` : ''}
+      ${d.meta   ? `<div class="dk-meta">${t(d.meta)}</div>` : ''}
+      ${d.title  ? `<h2 class="dk-title" id="dk-title">${t(d.title)}</h2>` : ''}
+      ${d.stats && d.stats.length ? `<div class="dk-stats">${
+        d.stats.map(x => `<div class="dk-stat"><b>${t(x[0])}</b><span>${t(x[1])}</span></div>`).join('')}</div>` : ''}
+      ${d.lead   ? `<p class="dk-lead">${t(d.lead)}</p>` : ''}
+      ${d.frame  ? `<div class="dk-shots"><iframe class="dk-frame" src="${d.frame}" title="CV"></iframe></div>` : secs}
+      <div class="dk-foot">
+        ${d.link ? `<a class="dk-link" href="${d.link}" target="_blank" rel="noopener">${t(UI.open)}</a>` : '<span></span>'}
+      </div>`;
+  }
+  modal.querySelectorAll('[data-go]').forEach(b =>
     b.addEventListener('click', () => goCase(+b.dataset.go)));
   inner.querySelectorAll('.dk-shot.is-zoom img').forEach(img =>
     img.addEventListener('click', () => zoomOpen(img.src)));
